@@ -1,0 +1,1415 @@
+<!DOCTYPE html>
+
+<html lang="ka">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>ANIME MULTIVERSE RPG</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+Georgian:wght@400;700&display=swap');
+
+:root {
+–ninja: #4ade80;
+–demon: #f97316;
+–pirate: #3b82f6;
+–dragon: #eab308;
+–shadow: #a855f7;
+–hp-red: #ef4444;
+–mp-blue: #06b6d4;
+–gold: #fbbf24;
+–dark: #0a0a0f;
+–panel: rgba(10,10,20,0.85);
+}
+
+- { margin: 0; padding: 0; box-sizing: border-box; touch-action: manipulation; }
+
+body {
+background: var(–dark);
+font-family: ‘Orbitron’, monospace;
+overflow: hidden;
+width: 100vw;
+height: 100vh;
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: center;
+}
+
+/* ===== TITLE SCREEN ===== */
+#title-screen {
+position: fixed; inset: 0; z-index: 100;
+display: flex; flex-direction: column;
+align-items: center; justify-content: center;
+background: radial-gradient(ellipse at center, #1a0a2e 0%, #0a0a0f 70%);
+}
+
+.title-bg {
+position: absolute; inset: 0; overflow: hidden;
+}
+.star {
+position: absolute; background: #fff; border-radius: 50%;
+animation: twinkle 2s infinite alternate;
+}
+
+@keyframes twinkle { from { opacity: 0.2; } to { opacity: 1; } }
+
+.title-logo {
+font-size: clamp(1.8rem, 6vw, 3.5rem);
+font-weight: 900;
+text-align: center;
+line-height: 1.1;
+z-index: 2;
+animation: glow-pulse 2s infinite;
+}
+.title-logo span { display: block; }
+.t1 { color: #4ade80; text-shadow: 0 0 30px #4ade80, 0 0 60px #4ade80; }
+.t2 { color: #f97316; text-shadow: 0 0 30px #f97316; font-size: 0.5em; letter-spacing: 0.3em; }
+.t3 { color: #a855f7; text-shadow: 0 0 30px #a855f7; font-size: 0.35em; letter-spacing: 0.5em; margin-top: 5px; }
+
+@keyframes glow-pulse {
+0%, 100% { filter: brightness(1); }
+50% { filter: brightness(1.3); }
+}
+
+.zone-select {
+z-index: 2; margin-top: 40px;
+display: grid; grid-template-columns: 1fr 1fr;
+gap: 10px; padding: 0 20px; max-width: 500px; width: 100%;
+}
+.zone-btn {
+padding: 12px 8px; border: 2px solid;
+background: rgba(0,0,0,0.6); cursor: pointer;
+font-family: ‘Orbitron’, monospace;
+font-size: 0.65rem; font-weight: 700;
+border-radius: 8px; transition: all 0.2s;
+text-transform: uppercase; letter-spacing: 0.05em;
+}
+.zone-btn:hover, .zone-btn:active {
+transform: scale(1.05);
+filter: brightness(1.3);
+}
+.z-ninja { color: var(–ninja); border-color: var(–ninja); }
+.z-demon { color: var(–demon); border-color: var(–demon); }
+.z-pirate { color: var(–pirate); border-color: var(–pirate); }
+.z-dragon { color: var(–dragon); border-color: var(–dragon); }
+.z-shadow { color: var(–shadow); border-color: var(–shadow); grid-column: 1/-1; }
+.z-mix { color: var(–gold); border-color: var(–gold); grid-column: 1/-1; }
+
+/* ===== GAME CANVAS ===== */
+#game-container {
+position: fixed; inset: 0;
+display: none;
+flex-direction: column;
+}
+
+canvas {
+display: block;
+width: 100%;
+height: 100%;
+image-rendering: pixelated;
+}
+
+/* ===== HUD ===== */
+#hud {
+position: fixed; top: 0; left: 0; right: 0;
+padding: 8px 12px;
+display: flex; align-items: center; gap: 10px;
+background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
+pointer-events: none;
+}
+
+.avatar-circle {
+width: 40px; height: 40px; border-radius: 50%;
+border: 2px solid var(–gold);
+background: #1a1a2e;
+display: flex; align-items: center; justify-content: center;
+font-size: 1.2rem; flex-shrink: 0;
+}
+
+.bars { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+
+.bar-row {
+display: flex; align-items: center; gap: 6px;
+font-size: 0.55rem; color: #aaa;
+}
+.bar-label { width: 18px; font-weight: 700; }
+.bar-track {
+flex: 1; height: 8px; background: rgba(255,255,255,0.1);
+border-radius: 4px; overflow: hidden; position: relative;
+}
+.bar-fill {
+height: 100%; border-radius: 4px;
+transition: width 0.3s ease;
+position: relative;
+}
+.hp-fill { background: linear-gradient(to right, #ef4444, #f87171); }
+.mp-fill { background: linear-gradient(to right, #06b6d4, #67e8f9); }
+.xp-fill { background: linear-gradient(to right, #fbbf24, #fde68a); }
+
+.bar-val { font-size: 0.5rem; color: #fff; min-width: 36px; text-align: right; }
+
+.hud-stats {
+display: flex; flex-direction: column; align-items: flex-end;
+gap: 2px; font-size: 0.5rem;
+}
+.hud-zone { color: var(–gold); font-size: 0.45rem; letter-spacing: 0.1em; }
+.hud-level { color: #fff; font-weight: 700; font-size: 0.7rem; }
+.hud-gold { color: var(–gold); }
+
+/* ===== SKILL BAR ===== */
+#skill-bar {
+position: fixed; bottom: 70px; left: 50%;
+transform: translateX(-50%);
+display: flex; gap: 8px;
+pointer-events: none;
+}
+
+.skill-slot {
+width: 48px; height: 48px; border-radius: 10px;
+border: 2px solid rgba(255,255,255,0.3);
+background: rgba(0,0,0,0.7);
+display: flex; flex-direction: column;
+align-items: center; justify-content: center;
+font-size: 1.1rem; position: relative;
+pointer-events: all; cursor: pointer;
+transition: all 0.15s;
+user-select: none;
+}
+.skill-slot:active { transform: scale(0.9); filter: brightness(1.5); }
+.skill-slot.on-cooldown { opacity: 0.5; }
+.skill-key {
+position: absolute; bottom: 2px; right: 4px;
+font-size: 0.35rem; color: #aaa; font-family: monospace;
+}
+.cooldown-overlay {
+position: absolute; inset: 0; border-radius: 8px;
+background: rgba(0,0,0,0.7);
+display: flex; align-items: center; justify-content: center;
+font-size: 0.7rem; color: #fff; font-family: ‘Orbitron’, monospace;
+}
+
+/* ===== MOBILE CONTROLS ===== */
+#mobile-controls {
+position: fixed; bottom: 0; left: 0; right: 0;
+display: flex; justify-content: space-between;
+align-items: flex-end;
+padding: 8px 16px 12px;
+background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+}
+
+.dpad {
+display: grid; grid-template-columns: repeat(3, 44px);
+grid-template-rows: repeat(3, 44px); gap: 2px;
+}
+.dpad-btn {
+background: rgba(255,255,255,0.08);
+border: 1px solid rgba(255,255,255,0.15);
+border-radius: 8px; cursor: pointer;
+display: flex; align-items: center; justify-content: center;
+font-size: 1rem; color: rgba(255,255,255,0.6);
+user-select: none; transition: background 0.1s;
+-webkit-tap-highlight-color: transparent;
+}
+.dpad-btn:active { background: rgba(255,255,255,0.2); }
+.dpad-empty { pointer-events: none; }
+
+.action-btns {
+display: grid; grid-template-columns: repeat(2, 44px);
+gap: 6px; align-items: end;
+}
+.action-btn {
+width: 44px; height: 44px; border-radius: 50%;
+border: 2px solid; cursor: pointer;
+background: rgba(0,0,0,0.6);
+display: flex; align-items: center; justify-content: center;
+font-size: 0.9rem;
+user-select: none; transition: all 0.1s;
+-webkit-tap-highlight-color: transparent;
+}
+.action-btn:active { transform: scale(0.9); filter: brightness(1.5); }
+.btn-attack { border-color: var(–hp-red); color: var(–hp-red); }
+.btn-skill1 { border-color: var(–ninja); color: var(–ninja); }
+.btn-skill2 { border-color: var(–shadow); color: var(–shadow); }
+.btn-dodge { border-color: var(–gold); color: var(–gold); }
+
+/* ===== DAMAGE NUMBERS ===== */
+.dmg-float {
+position: fixed; font-family: ‘Orbitron’, monospace;
+font-weight: 900; pointer-events: none;
+animation: float-up 1s ease-out forwards;
+z-index: 50;
+}
+@keyframes float-up {
+0% { transform: translateY(0) scale(1); opacity: 1; }
+100% { transform: translateY(-60px) scale(1.5); opacity: 0; }
+}
+
+/* ===== MESSAGE LOG ===== */
+#msg-log {
+position: fixed; bottom: 130px; left: 10px;
+max-width: 200px; pointer-events: none;
+}
+.msg-item {
+font-size: 0.5rem; color: rgba(255,255,255,0.7);
+padding: 2px 0;
+animation: msg-fade 3s ease forwards;
+font-family: ‘Noto Sans Georgian’, sans-serif;
+}
+@keyframes msg-fade {
+0% { opacity: 1; } 70% { opacity: 1; } 100% { opacity: 0; }
+}
+
+/* ===== BOSS BAR ===== */
+#boss-bar {
+position: fixed; top: 80px; left: 50%;
+transform: translateX(-50%);
+width: min(400px, 90vw);
+display: none;
+}
+.boss-name {
+text-align: center; font-size: 0.6rem;
+color: var(–hp-red); letter-spacing: 0.2em;
+margin-bottom: 4px; text-shadow: 0 0 10px var(–hp-red);
+}
+.boss-track {
+height: 12px; background: rgba(255,0,0,0.1);
+border: 1px solid var(–hp-red); border-radius: 6px; overflow: hidden;
+}
+.boss-fill {
+height: 100%; background: linear-gradient(to right, #991b1b, #ef4444, #fca5a5);
+transition: width 0.4s ease;
+box-shadow: 0 0 10px #ef4444;
+}
+
+/* ===== ZONE TRANSITION ===== */
+#zone-flash {
+position: fixed; inset: 0; z-index: 90;
+pointer-events: none; opacity: 0;
+transition: opacity 0.3s;
+}
+
+/* ===== GAME OVER / WIN ===== */
+#game-over {
+position: fixed; inset: 0; z-index: 95;
+background: rgba(0,0,0,0.9);
+display: none; flex-direction: column;
+align-items: center; justify-content: center;
+gap: 20px;
+}
+.go-title { font-size: 2.5rem; font-weight: 900; letter-spacing: 0.1em; }
+.go-sub { font-size: 0.7rem; color: #888; letter-spacing: 0.2em; font-family: ‘Noto Sans Georgian’, sans-serif; }
+.go-btn {
+padding: 12px 30px; font-family: ‘Orbitron’, monospace;
+font-size: 0.8rem; font-weight: 700; cursor: pointer;
+border-radius: 8px; transition: all 0.2s;
+background: transparent;
+}
+.go-btn:hover { transform: scale(1.05); }
+
+/* Effects */
+.flash-effect {
+position: fixed; inset: 0; pointer-events: none;
+z-index: 80; opacity: 0;
+animation: quick-flash 0.3s ease forwards;
+}
+@keyframes quick-flash { 0% { opacity: 0.4; } 100% { opacity: 0; } }
+</style>
+
+</head>
+<body>
+
+<!-- TITLE SCREEN -->
+
+<div id="title-screen">
+  <div class="title-bg" id="stars-bg"></div>
+  <div class="title-logo">
+    <span class="t1">ANIME</span>
+    <span class="t2">MULTIVERSE</span>
+    <span class="t3">⚔ RPG CHRONICLES ⚔</span>
+  </div>
+  <div class="zone-select">
+    <button class="zone-btn z-ninja" onclick="startGame('ninja')">🥷 Ninja Village<br><small>Naruto Style</small></button>
+    <button class="zone-btn z-demon" onclick="startGame('demon')">⚔️ Demon Forest<br><small>Demon Slayer</small></button>
+    <button class="zone-btn z-pirate" onclick="startGame('pirate')">🏴‍☠️ Pirate Island<br><small>One Piece</small></button>
+    <button class="zone-btn z-dragon" onclick="startGame('dragon')">🔥 Battle Wasteland<br><small>Dragon Ball</small></button>
+    <button class="zone-btn z-shadow" onclick="startGame('shadow')">🌑 Shadow Dungeon<br><small>Solo Leveling</small></button>
+    <button class="zone-btn z-mix" onclick="startGame('mix')">🌌 ANIME MULTIVERSE<br><small>ყველა ზონა — MIX</small></button>
+  </div>
+</div>
+
+<!-- GAME CONTAINER -->
+
+<div id="game-container">
+  <canvas id="game-canvas"></canvas>
+</div>
+
+<!-- HUD -->
+
+<div id="hud" style="display:none">
+  <div class="avatar-circle" id="avatar-icon">🥷</div>
+  <div class="bars">
+    <div class="bar-row">
+      <span class="bar-label" style="color:var(--hp-red)">HP</span>
+      <div class="bar-track"><div class="bar-fill hp-fill" id="hp-bar" style="width:100%"></div></div>
+      <span class="bar-val" id="hp-val">100/100</span>
+    </div>
+    <div class="bar-row">
+      <span class="bar-label" style="color:var(--mp-blue)">MP</span>
+      <div class="bar-track"><div class="bar-fill mp-fill" id="mp-bar" style="width:100%"></div></div>
+      <span class="bar-val" id="mp-val">100/100</span>
+    </div>
+    <div class="bar-row">
+      <span class="bar-label" style="color:var(--gold)">XP</span>
+      <div class="bar-track"><div class="bar-fill xp-fill" id="xp-bar" style="width:0%"></div></div>
+      <span class="bar-val" id="xp-val">0/100</span>
+    </div>
+  </div>
+  <div class="hud-stats">
+    <div class="hud-zone" id="hud-zone">NINJA VILLAGE</div>
+    <div class="hud-level">LV <span id="hud-lv">1</span></div>
+    <div class="hud-gold">💰 <span id="hud-gold">0</span></div>
+  </div>
+</div>
+
+<!-- BOSS BAR -->
+
+<div id="boss-bar">
+  <div class="boss-name" id="boss-name">👹 BOSS</div>
+  <div class="boss-track"><div class="boss-fill" id="boss-hp-bar" style="width:100%"></div></div>
+</div>
+
+<!-- SKILL BAR -->
+
+<div id="skill-bar" style="display:none">
+  <div class="skill-slot" id="s1" onclick="useSkill(0)">
+    <span id="s1-icon">⚡</span>
+    <span class="skill-key">Q/①</span>
+  </div>
+  <div class="skill-slot" id="s2" onclick="useSkill(1)">
+    <span id="s2-icon">🌪️</span>
+    <span class="skill-key">W/②</span>
+  </div>
+  <div class="skill-slot" id="s3" onclick="useSkill(2)">
+    <span id="s3-icon">🔥</span>
+    <span class="skill-key">E/③</span>
+  </div>
+  <div class="skill-slot" id="s4" onclick="useSkill(3)">
+    <span id="s4-icon">💫</span>
+    <span class="skill-key">R/④</span>
+  </div>
+</div>
+
+<!-- MSG LOG -->
+
+<div id="msg-log"></div>
+
+<!-- MOBILE CONTROLS -->
+
+<div id="mobile-controls" style="display:none">
+  <div class="dpad">
+    <div class="dpad-empty"></div>
+    <div class="dpad-btn" ontouchstart="setDir('up',true)" ontouchend="setDir('up',false)" onmousedown="setDir('up',true)" onmouseup="setDir('up',false)">▲</div>
+    <div class="dpad-empty"></div>
+    <div class="dpad-btn" ontouchstart="setDir('left',true)" ontouchend="setDir('left',false)" onmousedown="setDir('left',true)" onmouseup="setDir('left',false)">◀</div>
+    <div class="dpad-btn" style="background:rgba(255,255,255,0.05)"></div>
+    <div class="dpad-btn" ontouchstart="setDir('right',true)" ontouchend="setDir('right',false)" onmousedown="setDir('right',true)" onmouseup="setDir('right',false)">▶</div>
+    <div class="dpad-empty"></div>
+    <div class="dpad-btn" ontouchstart="setDir('down',true)" ontouchend="setDir('down',false)" onmousedown="setDir('down',true)" onmouseup="setDir('down',false)">▼</div>
+    <div class="dpad-empty"></div>
+  </div>
+  <div class="action-btns">
+    <div class="action-btn btn-skill1" onclick="useSkill(0)">⚡</div>
+    <div class="action-btn btn-attack" onclick="attack()">⚔️</div>
+    <div class="action-btn btn-skill2" onclick="useSkill(1)">🌪️</div>
+    <div class="action-btn btn-dodge" onclick="dodge()">💨</div>
+  </div>
+</div>
+
+<!-- GAME OVER -->
+
+<div id="game-over">
+  <div class="go-title" id="go-title" style="color:var(--hp-red)">GAME OVER</div>
+  <div class="go-sub" id="go-sub">შენ დამარცხდი...</div>
+  <button class="go-btn" id="go-btn"
+    style="border:2px solid var(--gold);color:var(--gold)"
+    onclick="restartGame()">🔄 თავიდან</button>
+</div>
+
+<script>
+// ===== ZONE CONFIGS =====
+const ZONES = {
+  ninja: {
+    name: 'NINJA VILLAGE', icon: '🥷', color: '#4ade80',
+    bgColors: ['#0a2818','#0d3b1f','#071a10'],
+    enemies: [
+      { name:'Genin', emoji:'🥷', hp:60, atk:8, xp:15, gold:5, speed:1.2 },
+      { name:'Chunin', emoji:'⚔️', hp:120, atk:15, xp:30, gold:10, speed:1.0 },
+      { name:'Rogue Ninja', emoji:'🗡️', hp:200, atk:25, xp:60, gold:20, speed:1.5, isBoss:false },
+    ],
+    boss: { name:'🥷 OROCHIMARU', emoji:'🐍', hp:800, atk:40, xp:300, gold:150 },
+    skills: ['⚡ Rasengan','🌪️ Shadow Clone','🔥 Fire Jutsu','💫 Summoning'],
+    skillColors: ['#4ade80','#86efac','#f97316','#fbbf24'],
+    skillDmg: [45,30,55,70],
+    skillMp: [20,15,30,40],
+    skillCd: [3,2,5,8],
+  },
+  demon: {
+    name: 'DEMON FOREST', icon: '⚔️', color: '#f97316',
+    bgColors: ['#2a0a00','#3d1200','#1a0500'],
+    enemies: [
+      { name:'Lower Moon', emoji:'😈', hp:80, atk:12, xp:20, gold:8, speed:0.9 },
+      { name:'Spider Demon', emoji:'🕷️', hp:150, atk:20, xp:40, gold:15, speed:1.1 },
+      { name:'Upper Moon', emoji:'👹', hp:300, atk:35, xp:80, gold:30, speed:0.8 },
+    ],
+    boss: { name:'👹 MUZAN KIBUTSUJI', emoji:'🩸', hp:1200, atk:60, xp:500, gold:250 },
+    skills: ['💎 Breath of Water','🌊 11th Form','🔥 Flame Breath','⚡ Thunder Clap'],
+    skillColors: ['#06b6d4','#0891b2','#f97316','#fbbf24'],
+    skillDmg: [50,80,60,90],
+    skillMp: [25,45,30,50],
+    skillCd: [3,6,4,8],
+  },
+  pirate: {
+    name: 'PIRATE ISLAND', icon: '🏴‍☠️', color: '#3b82f6',
+    bgColors: ['#0a1628','#0d2040','#071020'],
+    enemies: [
+      { name:'Marine', emoji:'⚓', hp:70, atk:10, xp:18, gold:7, speed:1.0 },
+      { name:'Warlord Guard', emoji:'🗡️', hp:130, atk:18, xp:35, gold:12, speed:0.9 },
+      { name:'Yonko Crew', emoji:'☠️', hp:250, atk:30, xp:70, gold:25, speed:1.2 },
+    ],
+    boss: { name:'⚓ BLACKBEARD', emoji:'🌑', hp:1000, atk:50, xp:400, gold:200 },
+    skills: ['👊 Gomu Gomu Punch','🌪️ Gear 4th','⚡ Conqueror Haki','🔥 Mera Mera'],
+    skillColors: ['#f97316','#ef4444','#fbbf24','#f59e0b'],
+    skillDmg: [40,100,60,75],
+    skillMp: [15,60,35,45],
+    skillCd: [2,8,5,6],
+  },
+  dragon: {
+    name: 'BATTLE WASTELAND', icon: '🔥', color: '#eab308',
+    bgColors: ['#1a1000','#2a1800','#0f0800'],
+    enemies: [
+      { name:'Saibaman', emoji:'🌿', hp:100, atk:15, xp:25, gold:10, speed:1.3 },
+      { name:'Frieza Soldier', emoji:'👽', hp:180, atk:25, xp:45, gold:18, speed:1.0 },
+      { name:'Cell Jr.', emoji:'🟢', hp:320, atk:40, xp:90, gold:35, speed:1.4 },
+    ],
+    boss: { name:'🔥 PERFECT CELL', emoji:'💥', hp:1500, atk:70, xp:600, gold:300 },
+    skills: ['💥 Kamehameha','⚡ Spirit Bomb','🔥 Final Flash','💫 Super Saiyan'],
+    skillColors: ['#3b82f6','#fbbf24','#a855f7','#eab308'],
+    skillDmg: [80,150,90,0],
+    skillMp: [40,80,50,60],
+    skillCd: [5,12,6,10],
+  },
+  shadow: {
+    name: 'SHADOW DUNGEON', icon: '🌑', color: '#a855f7',
+    bgColors: ['#0a0010','#100020','#050008'],
+    enemies: [
+      { name:'Goblin', emoji:'👺', hp:50, atk:10, xp:12, gold:4, speed:1.5 },
+      { name:'Orc Knight', emoji:'🛡️', hp:200, atk:28, xp:50, gold:20, speed:0.7 },
+      { name:'Shadow Beast', emoji:'👾', hp:350, atk:45, xp:100, gold:40, speed:1.0 },
+    ],
+    boss: { name:'🌑 MONARCH OF DEATH', emoji:'💀', hp:2000, atk:80, xp:800, gold:400 },
+    skills: ['🗡️ Shadow Strike','💀 Army of Dead','🌑 Domain Expand','⚡ Ruler Authority'],
+    skillColors: ['#a855f7','#7c3aed','#4c1d95','#c4b5fd'],
+    skillDmg: [60,40,200,120],
+    skillMp: [20,50,100,70],
+    skillCd: [2,6,15,10],
+  },
+  mix: {
+    name: 'ANIME MULTIVERSE', icon: '🌌', color: '#fbbf24',
+    bgColors: ['#0f0a1a','#1a0a0f','#0a1018'],
+    enemies: [
+      { name:'Genin', emoji:'🥷', hp:60, atk:8, xp:15, gold:5, speed:1.2 },
+      { name:'Lower Moon', emoji:'😈', hp:80, atk:12, xp:20, gold:8, speed:0.9 },
+      { name:'Marine', emoji:'⚓', hp:70, atk:10, xp:18, gold:7, speed:1.0 },
+      { name:'Saibaman', emoji:'🌿', hp:100, atk:15, xp:25, gold:10, speed:1.3 },
+      { name:'Shadow Beast', emoji:'👾', hp:350, atk:45, xp:100, gold:40, speed:1.0 },
+    ],
+    boss: { name:'💀 ULTRA INSTINCT MUZAN', emoji:'☠️', hp:3000, atk:100, xp:1000, gold:500 },
+    skills: ['⚡ Rasengan','🌊 Breath of Water','💥 Kamehameha','🌑 Domain Expand'],
+    skillColors: ['#4ade80','#06b6d4','#3b82f6','#a855f7'],
+    skillDmg: [45,50,80,200],
+    skillMp: [20,25,40,100],
+    skillCd: [3,3,5,15],
+  }
+};
+
+// ===== GAME STATE =====
+let G = {};
+let canvas, ctx;
+let keys = {};
+let mobileDir = { up:false, down:false, left:false, right:false };
+let animFrame;
+let particles = [];
+let effects = [];
+let floatingTexts = [];
+let bossSpawned = false;
+let gameRunning = false;
+
+function startGame(zoneKey) {
+  const zone = ZONES[zoneKey];
+  document.getElementById('title-screen').style.display = 'none';
+  document.getElementById('game-container').style.display = 'flex';
+  document.getElementById('hud').style.display = 'flex';
+  document.getElementById('skill-bar').style.display = 'flex';
+  document.getElementById('mobile-controls').style.display = 'flex';
+
+  // Update HUD zone color
+  document.getElementById('hud-zone').textContent = zone.name;
+  document.getElementById('hud-zone').style.color = zone.color;
+  document.getElementById('avatar-icon').textContent = zone.icon;
+  document.getElementById('avatar-icon').style.borderColor = zone.color;
+
+  // Update skills
+  const sIcons = ['s1-icon','s2-icon','s3-icon','s4-icon'];
+  zone.skills.forEach((s,i) => {
+    const el = document.getElementById(sIcons[i]);
+    if(el) el.textContent = zone.skillColors[i] ? s.split(' ')[0] : '⚡';
+  });
+
+  setupCanvas();
+  initGame(zone, zoneKey);
+  gameRunning = true;
+  log(`${zone.name}-ში შევედი! 🎮`);
+  gameLoop();
+}
+
+function setupCanvas() {
+  canvas = document.getElementById('game-canvas');
+  ctx = canvas.getContext('2d');
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+}
+
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+
+function initGame(zone, zoneKey) {
+  G = {
+    zone, zoneKey,
+    player: {
+      x: canvas.width/2, y: canvas.height/2,
+      w: 32, h: 32,
+      hp: 100, maxHp: 100,
+      mp: 100, maxMp: 100,
+      xp: 0, xpNext: 100,
+      level: 1,
+      gold: 0,
+      atk: 20,
+      speed: 3,
+      invincible: 0,
+      dodging: 0,
+      facing: 'right',
+      walkFrame: 0,
+      walkTimer: 0,
+    },
+    enemies: [],
+    projectiles: [],
+    items: [],
+    camera: { x:0, y:0 },
+    world: { w: canvas.width*3, h: canvas.height*3 },
+    spawnTimer: 0,
+    spawnInterval: 180,
+    killCount: 0,
+    bossActive: false,
+    boss: null,
+    bgStars: generateBgStars(zone),
+    tiles: generateTiles(zone),
+    cooldowns: [0,0,0,0],
+  };
+
+  // spawn initial enemies
+  for(let i=0;i<4;i++) spawnEnemy();
+  bossSpawned = false;
+}
+
+function generateBgStars(zone) {
+  const stars = [];
+  for(let i=0;i<80;i++) {
+    stars.push({
+      x: Math.random()*3000,
+      y: Math.random()*3000,
+      r: Math.random()*2+0.5,
+      brightness: Math.random(),
+      speed: Math.random()*0.3+0.1,
+    });
+  }
+  return stars;
+}
+
+function generateTiles(zone) {
+  const tiles = [];
+  const colors = {
+    ninja:   ['#0f2d1a','#112e1c','#143320','#0d2817'],
+    demon:   ['#2d0f0f','#350d0d','#3d1010','#280c0c'],
+    pirate:  ['#0f1a2d','#0d1f35','#101e32','#0c1828'],
+    dragon:  ['#2d1f0f','#35240d','#3d2a10','#281c0c'],
+    shadow:  ['#0f0f2d','#100d35','#100f3d','#0c0c28'],
+    mix:     ['#1a0f2d','#1f0d35','#150a38','#100c2a'],
+  };
+  const c = colors[zone] || colors.mix;
+  for(let tx=0;tx<30;tx++) {
+    for(let ty=0;ty<30;ty++) {
+      tiles.push({
+        x: tx*100, y: ty*100,
+        color: c[Math.floor(Math.random()*c.length)],
+        variant: Math.random()>0.85,
+      });
+    }
+  }
+  return tiles;
+}
+
+function spawnEnemy() {
+  const zone = G.zone;
+  const type = zone.enemies[Math.floor(Math.random()*zone.enemies.length)];
+  const margin = 100;
+  const px = G.player.x, py = G.player.y;
+  let x, y;
+  do {
+    x = G.camera.x + Math.random()*canvas.width;
+    y = G.camera.y + Math.random()*canvas.height;
+  } while(Math.abs(x-px)<150 && Math.abs(y-py)<150);
+
+  G.enemies.push({
+    ...type,
+    maxHp: type.hp,
+    x, y,
+    vx:0, vy:0,
+    aiTimer: Math.random()*60,
+    attackTimer: 0,
+    hitFlash: 0,
+    id: Math.random(),
+  });
+}
+
+function spawnBoss() {
+  const zone = G.zone;
+  const b = zone.boss;
+  const px = G.player.x, py = G.player.y;
+  G.boss = {
+    ...b,
+    maxHp: b.hp,
+    x: px + 300, y: py,
+    vx:0, vy:0,
+    aiTimer:0,
+    attackTimer:0,
+    hitFlash:0,
+    speed:1.2,
+    phase:1,
+  };
+  G.bossActive = true;
+  document.getElementById('boss-bar').style.display = 'block';
+  document.getElementById('boss-name').textContent = b.name;
+  log(`⚠️ BOSS გამოჩნდა! — ${b.name}`);
+  screenFlash('rgba(255,0,0,0.3)');
+}
+
+// ===== INPUT =====
+document.addEventListener('keydown', e => {
+  keys[e.key.toLowerCase()] = true;
+  if(e.key==='q'||e.key==='1') useSkill(0);
+  if(e.key==='w'||e.key==='2') { /* w is move */ }
+  if(e.key==='e'||e.key==='3') useSkill(1);
+  if(e.key==='r'||e.key==='4') useSkill(2);
+  if(e.key==='f'||e.key==='5') useSkill(3);
+  if(e.key===' ') { e.preventDefault(); attack(); }
+  if(e.key==='Shift') dodge();
+});
+document.addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
+
+function setDir(d,v) { mobileDir[d]=v; }
+
+function getInput() {
+  return {
+    left: keys['a']||keys['arrowleft']||mobileDir.left,
+    right: keys['d']||keys['arrowright']||mobileDir.right,
+    up: keys['w']||keys['arrowup']||mobileDir.up,
+    down: keys['s']||keys['arrowdown']||mobileDir.down,
+  };
+}
+
+// ===== COMBAT =====
+function attack() {
+  if(!gameRunning) return;
+  const p = G.player;
+  const range = 80;
+  let hit = false;
+
+  // check enemies
+  [...G.enemies].forEach(e => {
+    const dx = e.x - p.x, dy = e.y - p.y;
+    if(Math.sqrt(dx*dx+dy*dy) < range) {
+      const dmg = p.atk + Math.floor(Math.random()*10);
+      dealDamage(e, dmg, false);
+      hit = true;
+    }
+  });
+
+  // check boss
+  if(G.bossActive && G.boss) {
+    const b = G.boss;
+    const dx = b.x - p.x, dy = b.y - p.y;
+    if(Math.sqrt(dx*dx+dy*dy) < range+20) {
+      const dmg = p.atk + Math.floor(Math.random()*15);
+      dealDamage(b, dmg, true);
+      hit = true;
+    }
+  }
+
+  // attack effect
+  spawnEffect(p.x+(p.facing==='right'?40:-40), p.y, '#fff', 30);
+  if(!hit) log('ვერ მოხვდი!');
+}
+
+function useSkill(idx) {
+  if(!gameRunning) return;
+  const zone = G.zone;
+  const p = G.player;
+  if(G.cooldowns[idx]>0) { log(`⏳ Cooldown: ${Math.ceil(G.cooldowns[idx]/60)}s`); return; }
+  const mp = zone.skillMp[idx];
+  if(p.mp < mp) { log('MP არ არის საკმარისი!'); return; }
+
+  p.mp -= mp;
+  G.cooldowns[idx] = zone.skillCd[idx]*60;
+  const dmg = zone.skillDmg[idx];
+  const skillName = zone.skills[idx];
+  const color = zone.skillColors[idx];
+
+  // big AoE
+  const range = idx===3 ? 250 : 150;
+  let hits = 0;
+
+  G.enemies.forEach(e => {
+    const dx=e.x-p.x, dy=e.y-p.y;
+    if(Math.sqrt(dx*dx+dy*dy)<range) {
+      dealDamage(e, dmg+Math.floor(Math.random()*20), false);
+      hits++;
+    }
+  });
+  if(G.bossActive && G.boss) {
+    const b=G.boss; const dx=b.x-p.x, dy=b.y-p.y;
+    if(Math.sqrt(dx*dx+dy*dy)<range+40) {
+      dealDamage(b, Math.floor(dmg*0.6), true);
+      hits++;
+    }
+  }
+
+  // special: Super Saiyan / domain expand = buff
+  if(idx===3 && (G.zoneKey==='dragon'||G.zoneKey==='shadow')) {
+    p.atk += 10; p.speed += 0.5;
+    setTimeout(()=>{p.atk-=10;p.speed-=0.5;},5000);
+    log(`💥 ${skillName} — ATK+10 for 5s!`);
+  } else {
+    log(`✨ ${skillName} — ${hits} მტერი!`);
+  }
+
+  // big skill effect
+  for(let i=0;i<20;i++) {
+    const angle=Math.random()*Math.PI*2, spd=Math.random()*5+2, r=Math.random()*150;
+    effects.push({
+      x: p.x+Math.cos(angle)*r, y: p.y+Math.sin(angle)*r,
+      vx: Math.cos(angle)*spd, vy: Math.sin(angle)*spd,
+      color, life:40, maxLife:40, size:Math.random()*12+4,
+    });
+  }
+  screenFlash(color+'44');
+  updateCooldownUI();
+}
+
+function dodge() {
+  if(!gameRunning) return;
+  const p = G.player;
+  p.invincible = 40;
+  p.dodging = 20;
+  const inp = getInput();
+  const dx = (inp.right?1:inp.left?-1:0);
+  const dy = (inp.down?1:inp.up?-1:0);
+  p.x += dx*60; p.y += dy*60;
+  spawnEffect(p.x, p.y, '#fff', 20);
+  log('💨 Dodge!');
+}
+
+function dealDamage(target, dmg, isBoss) {
+  target.hp -= dmg;
+  target.hitFlash = 8;
+
+  // float text
+  floatDmg(target.x, target.y-20, dmg, isBoss?'#ff6b6b':'#fff');
+
+  // particle burst
+  for(let i=0;i<8;i++) {
+    const angle=Math.random()*Math.PI*2;
+    particles.push({
+      x:target.x, y:target.y,
+      vx:Math.cos(angle)*3, vy:Math.sin(angle)*3,
+      color:'#ef4444', life:20, size:4,
+    });
+  }
+
+  if(target.hp<=0) {
+    if(isBoss) killBoss(target);
+    else killEnemy(target);
+  }
+
+  if(isBoss) {
+    const pct = target.hp/target.maxHp*100;
+    document.getElementById('boss-hp-bar').style.width=pct+'%';
+    // phase 2
+    if(pct<50 && target.phase===1) {
+      target.phase=2; target.speed*=1.5; target.atk*=1.3;
+      log('⚠️ BOSS PHASE 2! გაძლიერდა!');
+      screenFlash('rgba(200,0,0,0.5)');
+    }
+  }
+}
+
+function killEnemy(e) {
+  G.enemies = G.enemies.filter(x=>x!==e);
+  G.player.xp += e.xp;
+  G.player.gold += e.gold;
+  G.killCount++;
+  log(`💀 ${e.name} — +${e.xp}XP +${e.gold}G`);
+
+  // item drop
+  if(Math.random()<0.3) {
+    G.items.push({
+      x:e.x, y:e.y,
+      type: Math.random()<0.5?'hp':'mp',
+      amount:25,
+    });
+  }
+
+  checkLevelUp();
+
+  // boss at 10 kills
+  if(G.killCount>=10 && !bossSpawned) {
+    bossSpawned=true;
+    setTimeout(spawnBoss,2000);
+    log('⚠️ 10 მტერი მოკვდა... BOSS მოდის!');
+  }
+}
+
+function killBoss(b) {
+  G.bossActive = false;
+  G.boss = null;
+  G.player.xp += b.xp;
+  G.player.gold += b.gold;
+  document.getElementById('boss-bar').style.display='none';
+  log(`🏆 BOSS დამარცხდა! +${b.xp}XP +${b.gold}G`);
+
+  // big explosion
+  for(let i=0;i<50;i++) {
+    const angle=Math.random()*Math.PI*2, spd=Math.random()*8;
+    effects.push({
+      x:b.x, y:b.y,
+      vx:Math.cos(angle)*spd, vy:Math.sin(angle)*spd,
+      color:['#fbbf24','#f97316','#ef4444','#a855f7'][Math.floor(Math.random()*4)],
+      life:80, maxLife:80, size:Math.random()*16+6,
+    });
+  }
+  screenFlash('rgba(255,200,0,0.5)');
+  checkLevelUp();
+
+  // win
+  setTimeout(()=>{
+    showGameEnd(true);
+  },3000);
+}
+
+function checkLevelUp() {
+  const p = G.player;
+  while(p.xp >= p.xpNext) {
+    p.xp -= p.xpNext;
+    p.level++;
+    p.xpNext = Math.floor(p.xpNext*1.5);
+    p.maxHp += 20; p.hp = Math.min(p.hp+50, p.maxHp);
+    p.maxMp += 10; p.mp = Math.min(p.mp+30, p.maxMp);
+    p.atk += 5;
+    log(`⬆️ LEVEL UP! LV ${p.level} — ATK+5 HP+20`);
+    screenFlash('#fbbf2444');
+
+    // level effects
+    for(let i=0;i<30;i++) {
+      const angle=Math.random()*Math.PI*2;
+      effects.push({
+        x:p.x, y:p.y,
+        vx:Math.cos(angle)*5, vy:Math.sin(angle)*5,
+        color:'#fbbf24', life:60, maxLife:60, size:8,
+      });
+    }
+  }
+  updateHUD();
+}
+
+// ===== GAME LOOP =====
+function gameLoop() {
+  if(!gameRunning) return;
+  update();
+  render();
+  animFrame = requestAnimationFrame(gameLoop);
+}
+
+function update() {
+  const p = G.player;
+  const inp = getInput();
+
+  // movement
+  let dx=0, dy=0;
+  if(inp.left){ dx=-p.speed; p.facing='left'; }
+  if(inp.right){ dx=p.speed; p.facing='right'; }
+  if(inp.up) dy=-p.speed;
+  if(inp.down) dy=p.speed;
+  if(dx&&dy){ dx*=0.707; dy*=0.707; }
+
+  p.x = Math.max(16, Math.min(G.world.w-16, p.x+dx));
+  p.y = Math.max(16, Math.min(G.world.h-16, p.y+dy));
+
+  if(dx||dy){ p.walkTimer++; if(p.walkTimer>8){ p.walkFrame=(p.walkFrame+1)%4; p.walkTimer=0; } }
+
+  // camera
+  G.camera.x = p.x - canvas.width/2;
+  G.camera.y = p.y - canvas.height/2;
+
+  // spawn
+  G.spawnTimer++;
+  if(G.spawnTimer>G.spawnInterval && G.enemies.length<8) {
+    spawnEnemy(); G.spawnTimer=0;
+    G.spawnInterval = Math.max(60, G.spawnInterval-2);
+  }
+
+  // cooldowns
+  G.cooldowns = G.cooldowns.map(c=>Math.max(0,c-1));
+  updateCooldownUI();
+
+  // player invincible
+  if(p.invincible>0) p.invincible--;
+  if(p.dodging>0) p.dodging--;
+
+  // enemy AI
+  G.enemies.forEach(e => {
+    const tx=p.x-e.x, ty=p.y-e.y;
+    const dist=Math.sqrt(tx*tx+ty*ty);
+    const spd=e.speed||1;
+    e.vx=tx/dist*spd; e.vy=ty/dist*spd;
+    e.x+=e.vx; e.y+=e.vy;
+    if(e.hitFlash>0) e.hitFlash--;
+
+    // attack player
+    e.attackTimer++;
+    if(dist<50 && e.attackTimer>90) {
+      e.attackTimer=0;
+      if(p.invincible<=0) {
+        const dmg = e.atk - Math.floor(Math.random()*5);
+        p.hp = Math.max(0, p.hp-dmg);
+        floatDmg(p.x, p.y-30, dmg, '#ff6b6b', true);
+        screenFlash('rgba(255,0,0,0.15)');
+        if(p.hp<=0) { gameRunning=false; setTimeout(()=>showGameEnd(false),500); }
+      }
+    }
+  });
+
+  // boss AI
+  if(G.bossActive && G.boss) {
+    const b = G.boss;
+    const tx=p.x-b.x, ty=p.y-b.y;
+    const dist=Math.sqrt(tx*tx+ty*ty);
+    b.vx=tx/dist*b.speed; b.vy=ty/dist*b.speed;
+    b.x+=b.vx; b.y+=b.vy;
+    if(b.hitFlash>0) b.hitFlash--;
+
+    b.attackTimer++;
+    const atkInterval = b.phase===2?50:70;
+    if(dist<80 && b.attackTimer>atkInterval) {
+      b.attackTimer=0;
+      if(p.invincible<=0) {
+        const dmg = b.atk + Math.floor(Math.random()*20);
+        p.hp = Math.max(0, p.hp-dmg);
+        floatDmg(p.x, p.y-30, dmg, '#ff0000', true);
+        screenFlash('rgba(255,0,0,0.25)');
+        if(p.hp<=0) { gameRunning=false; setTimeout(()=>showGameEnd(false),500); }
+      }
+    }
+
+    // boss projectile in phase 2
+    if(b.phase===2) {
+      b.aiTimer++;
+      if(b.aiTimer>120) {
+        b.aiTimer=0;
+        const angle=Math.atan2(p.y-b.y, p.x-b.x);
+        for(let i=-1;i<=1;i++) {
+          G.projectiles.push({
+            x:b.x, y:b.y,
+            vx:Math.cos(angle+i*0.3)*4,
+            vy:Math.sin(angle+i*0.3)*4,
+            dmg: Math.floor(b.atk*0.5),
+            color: '#ef4444', life:80, isBoss:true,
+          });
+        }
+      }
+    }
+  }
+
+  // projectiles
+  G.projectiles = G.projectiles.filter(pr => {
+    pr.x+=pr.vx; pr.y+=pr.vy; pr.life--;
+    if(pr.isBoss && p.invincible<=0) {
+      const dx=p.x-pr.x, dy=p.y-pr.y;
+      if(Math.sqrt(dx*dx+dy*dy)<25) {
+        p.hp=Math.max(0,p.hp-pr.dmg);
+        floatDmg(p.x,p.y-30,pr.dmg,'#ff4444',true);
+        if(p.hp<=0){gameRunning=false;setTimeout(()=>showGameEnd(false),500);}
+        return false;
+      }
+    }
+    return pr.life>0;
+  });
+
+  // items
+  G.items = G.items.filter(item => {
+    const dx=p.x-item.x, dy=p.y-item.y;
+    if(Math.sqrt(dx*dx+dy*dy)<35) {
+      if(item.type==='hp'){ p.hp=Math.min(p.maxHp,p.hp+item.amount); log(`❤️ +${item.amount} HP`); }
+      else { p.mp=Math.min(p.maxMp,p.mp+item.amount); log(`💙 +${item.amount} MP`); }
+      return false;
+    }
+    return true;
+  });
+
+  // mp regen
+  if(p.mp < p.maxMp) p.mp = Math.min(p.maxMp, p.mp+0.05);
+
+  // particles
+  particles = particles.filter(pt => {
+    pt.x+=pt.vx; pt.y+=pt.vy; pt.life--;
+    pt.vx*=0.9; pt.vy*=0.9;
+    return pt.life>0;
+  });
+  effects = effects.filter(ef => {
+    ef.x+=ef.vx; ef.y+=ef.vy; ef.life--;
+    ef.vx*=0.92; ef.vy*=0.92;
+    return ef.life>0;
+  });
+
+  updateHUD();
+}
+
+function render() {
+  const cx=G.camera.x, cy=G.camera.y;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  // background
+  const bg = G.zone.bgColors;
+  const grad = ctx.createRadialGradient(
+    canvas.width/2, canvas.height/2, 0,
+    canvas.width/2, canvas.height/2, canvas.width
+  );
+  grad.addColorStop(0, bg[0]);
+  grad.addColorStop(0.5, bg[1]);
+  grad.addColorStop(1, bg[2]);
+  ctx.fillStyle=grad;
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  // tiles (ground)
+  G.tiles.forEach(t => {
+    const sx=t.x-cx, sy=t.y-cy;
+    if(sx<-110||sx>canvas.width+10||sy<-110||sy>canvas.height+10) return;
+    ctx.fillStyle=t.color;
+    ctx.fillRect(sx,sy,100,100);
+    if(t.variant) {
+      ctx.fillStyle='rgba(255,255,255,0.03)';
+      ctx.fillRect(sx+10,sy+10,80,80);
+    }
+  });
+
+  // grid lines subtle
+  ctx.strokeStyle='rgba(255,255,255,0.03)';
+  ctx.lineWidth=1;
+  for(let gx=(-cx%100);gx<canvas.width;gx+=100){
+    ctx.beginPath();ctx.moveTo(gx,0);ctx.lineTo(gx,canvas.height);ctx.stroke();
+  }
+  for(let gy=(-cy%100);gy<canvas.height;gy+=100){
+    ctx.beginPath();ctx.moveTo(0,gy);ctx.lineTo(canvas.width,gy);ctx.stroke();
+  }
+
+  // items
+  G.items.forEach(item => {
+    const sx=item.x-cx, sy=item.y-cy;
+    ctx.font='20px serif';
+    ctx.textAlign='center';
+    ctx.fillText(item.type==='hp'?'❤️':'💙', sx, sy);
+    // glow
+    ctx.shadowColor=item.type==='hp'?'#ef4444':'#06b6d4';
+    ctx.shadowBlur=15;
+    ctx.shadowBlur=0;
+  });
+
+  // enemies
+  G.enemies.forEach(e => { drawEntity(e,cx,cy,false); });
+
+  // boss
+  if(G.bossActive && G.boss) { drawEntity(G.boss,cx,cy,true); }
+
+  // player
+  drawPlayer(cx,cy);
+
+  // projectiles
+  G.projectiles.forEach(pr => {
+    const sx=pr.x-cx, sy=pr.y-cy;
+    ctx.beginPath();
+    ctx.arc(sx,sy,8,0,Math.PI*2);
+    ctx.fillStyle=pr.color;
+    ctx.shadowColor=pr.color;
+    ctx.shadowBlur=15;
+    ctx.fill();
+    ctx.shadowBlur=0;
+  });
+
+  // particles
+  particles.forEach(pt => {
+    const sx=pt.x-cx, sy=pt.y-cy;
+    const alpha=pt.life/20;
+    ctx.beginPath();
+    ctx.arc(sx,sy,pt.size*alpha,0,Math.PI*2);
+    ctx.fillStyle=pt.color;
+    ctx.globalAlpha=alpha;
+    ctx.fill();
+    ctx.globalAlpha=1;
+  });
+
+  // effects
+  effects.forEach(ef => {
+    const sx=ef.x-cx, sy=ef.y-cy;
+    const alpha=ef.life/ef.maxLife;
+    ctx.beginPath();
+    ctx.arc(sx,sy,ef.size,0,Math.PI*2);
+    ctx.fillStyle=ef.color;
+    ctx.shadowColor=ef.color;
+    ctx.shadowBlur=20;
+    ctx.globalAlpha=alpha;
+    ctx.fill();
+    ctx.globalAlpha=1;
+    ctx.shadowBlur=0;
+  });
+
+  // floating texts on canvas
+  floatingTexts = floatingTexts.filter(ft => {
+    ft.life--; ft.y-=1.5;
+    const alpha=ft.life/40;
+    ctx.font=`bold ${ft.size||16}px Orbitron, monospace`;
+    ctx.textAlign='center';
+    ctx.fillStyle=ft.color;
+    ctx.globalAlpha=Math.min(1,alpha*2);
+    ctx.shadowColor=ft.color;
+    ctx.shadowBlur=10;
+    ctx.fillText(ft.text, ft.x-cx, ft.y-cy);
+    ctx.globalAlpha=1;
+    ctx.shadowBlur=0;
+    return ft.life>0;
+  });
+}
+
+function drawPlayer(cx,cy) {
+  const p=G.player;
+  const sx=p.x-cx, sy=p.y-cy;
+  const t=Date.now()/1000;
+
+  // shadow
+  ctx.beginPath();
+  ctx.ellipse(sx,sy+14,14,5,0,0,Math.PI*2);
+  ctx.fillStyle='rgba(0,0,0,0.4)';
+  ctx.fill();
+
+  // dodge trail
+  if(p.dodging>0) {
+    ctx.globalAlpha=0.3;
+    ctx.font='28px serif';
+    ctx.textAlign='center';
+    ctx.fillText(G.zone.icon, sx-(p.facing==='right'?20:-20), sy+8);
+    ctx.globalAlpha=1;
+  }
+
+  // body glow when invincible
+  if(p.invincible>0) {
+    ctx.beginPath();
+    ctx.arc(sx,sy,22,0,Math.PI*2);
+    ctx.fillStyle=`rgba(255,255,255,${Math.sin(t*20)*0.3+0.1})`;
+    ctx.fill();
+  }
+
+  // character emoji
+  ctx.save();
+  if(p.facing==='left') { ctx.scale(-1,1); }
+  ctx.font='28px serif';
+  ctx.textAlign='center';
+  const bob = Math.sin(p.walkFrame*Math.PI/2)*3;
+  ctx.fillText(G.zone.icon, p.facing==='left'?-sx:sx, sy+bob);
+  ctx.restore();
+
+  // zone color aura
+  ctx.beginPath();
+  ctx.arc(sx,sy,18,0,Math.PI*2);
+  ctx.strokeStyle=G.zone.color;
+  ctx.lineWidth=2;
+  ctx.globalAlpha=0.5+Math.sin(t*3)*0.2;
+  ctx.stroke();
+  ctx.globalAlpha=1;
+}
+
+function drawEntity(e,cx,cy,isBoss) {
+  const sx=e.x-cx, sy=e.y-cy;
+  if(sx<-60||sx>canvas.width+60||sy<-60||sy>canvas.height+60) return;
+
+  const scale = isBoss ? 1.8 : 1;
+
+  // shadow
+  ctx.beginPath();
+  ctx.ellipse(sx, sy+14*scale, 14*scale, 5*scale, 0,0,Math.PI*2);
+  ctx.fillStyle='rgba(0,0,0,0.4)';
+  ctx.fill();
+
+  // hit flash
+  if(e.hitFlash>0) {
+    ctx.beginPath();
+    ctx.arc(sx,sy,20*scale,0,Math.PI*2);
+    ctx.fillStyle='rgba(255,255,255,0.5)';
+    ctx.fill();
+  }
+
+  // emoji
+  ctx.font=`${28*scale}px serif`;
+  ctx.textAlign='center';
+  ctx.fillText(e.emoji, sx, sy+8*scale);
+
+  // HP bar
+  const bw=40*scale, bh=5*scale;
+  ctx.fillStyle='rgba(0,0,0,0.6)';
+  ctx.fillRect(sx-bw/2, sy-30*scale, bw, bh);
+  const hpPct=e.hp/e.maxHp;
+  ctx.fillStyle=hpPct>0.5?'#4ade80':hpPct>0.25?'#eab308':'#ef4444';
+  ctx.fillRect(sx-bw/2, sy-30*scale, bw*hpPct, bh);
+
+  // name for boss
+  if(isBoss) {
+    ctx.font='bold 11px Orbitron, monospace';
+    ctx.fillStyle='#ef4444';
+    ctx.textAlign='center';
+    ctx.shadowColor='#ef4444'; ctx.shadowBlur=10;
+    ctx.fillText(e.name||'BOSS', sx, sy-38);
+    ctx.shadowBlur=0;
+  }
+}
+
+// ===== HUD =====
+function updateHUD() {
+  const p=G.player;
+  document.getElementById('hp-bar').style.width=(p.hp/p.maxHp*100)+'%';
+  document.getElementById('hp-val').textContent=`${Math.ceil(p.hp)}/${p.maxHp}`;
+  document.getElementById('mp-bar').style.width=(p.mp/p.maxMp*100)+'%';
+  document.getElementById('mp-val').textContent=`${Math.ceil(p.mp)}/${p.maxMp}`;
+  document.getElementById('xp-bar').style.width=(p.xp/p.xpNext*100)+'%';
+  document.getElementById('xp-val').textContent=`${p.xp}/${p.xpNext}`;
+  document.getElementById('hud-lv').textContent=p.level;
+  document.getElementById('hud-gold').textContent=p.gold;
+}
+
+function updateCooldownUI() {
+  const slots=['s1','s2','s3','s4'];
+  slots.forEach((id,i) => {
+    const el=document.getElementById(id);
+    if(!el) return;
+    const cd=G.cooldowns[i];
+    let overlay=el.querySelector('.cooldown-overlay');
+    if(cd>0) {
+      if(!overlay){ overlay=document.createElement('div'); overlay.className='cooldown-overlay'; el.appendChild(overlay); }
+      overlay.textContent=Math.ceil(cd/60);
+    } else {
+      if(overlay) overlay.remove();
+    }
+  });
+}
+
+// ===== UTILITIES =====
+function spawnEffect(x,y,color,count) {
+  for(let i=0;i<count;i++) {
+    const angle=Math.random()*Math.PI*2;
+    effects.push({
+      x,y,
+      vx:Math.cos(angle)*4, vy:Math.sin(angle)*4,
+      color, life:30, maxLife:30, size:6,
+    });
+  }
+}
+
+function floatDmg(x,y,dmg,color,isPlayer) {
+  floatingTexts.push({
+    x,y,text:isPlayer?`-${dmg}`:`${dmg}`,
+    color, life:40, size:isPlayer?14:18,
+  });
+}
+
+function screenFlash(color) {
+  const el=document.createElement('div');
+  el.className='flash-effect';
+  el.style.background=color;
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(),300);
+}
+
+function log(msg) {
+  const container=document.getElementById('msg-log');
+  const el=document.createElement('div');
+  el.className='msg-item';
+  el.textContent=msg;
+  container.appendChild(el);
+  setTimeout(()=>el.remove(),3000);
+  while(container.children.length>5) container.removeChild(container.firstChild);
+}
+
+function showGameEnd(won) {
+  gameRunning=false;
+  cancelAnimationFrame(animFrame);
+  const el=document.getElementById('game-over');
+  el.style.display='flex';
+  if(won) {
+    document.getElementById('go-title').textContent='🏆 VICTORY!';
+    document.getElementById('go-title').style.color='#fbbf24';
+    document.getElementById('go-sub').textContent=`BOSS დამარცხდა! LV${G.player.level} — ${G.player.gold} Gold 💰`;
+    document.getElementById('go-btn').textContent='🔄 კვლავ თამაში';
+  } else {
+    document.getElementById('go-title').textContent='💀 GAME OVER';
+    document.getElementById('go-title').style.color='#ef4444';
+    document.getElementById('go-sub').textContent=`LV${G.player.level} | Kill: ${G.killCount} | Gold: ${G.player.gold}`;
+    document.getElementById('go-btn').textContent='🔄 თავიდან';
+  }
+}
+
+function restartGame() {
+  document.getElementById('game-over').style.display='none';
+  document.getElementById('boss-bar').style.display='none';
+  document.getElementById('title-screen').style.display='flex';
+  document.getElementById('game-container').style.display='none';
+  document.getElementById('hud').style.display='none';
+  document.getElementById('skill-bar').style.display='none';
+  document.getElementById('mobile-controls').style.display='none';
+  cancelAnimationFrame(animFrame);
+  particles=[]; effects=[]; floatingTexts=[];
+  keys={}; mobileDir={up:false,down:false,left:false,right:false};
+  bossSpawned=false;
+}
+
+// ===== STARS ON TITLE =====
+(function() {
+  const container=document.getElementById('stars-bg');
+  for(let i=0;i<120;i++) {
+    const s=document.createElement('div');
+    s.className='star';
+    const size=Math.random()*3+1;
+    s.style.cssText=`width:${size}px;height:${size}px;left:${Math.random()*100}%;top:${Math.random()*100}%;animation-delay:${Math.random()*2}s;animation-duration:${Math.random()*2+1}s;`;
+    container.appendChild(s);
+  }
+})();
+</script>
+
+</body>
+</html>
